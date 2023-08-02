@@ -1,6 +1,7 @@
 from flask import Flask,jsonify,render_template,request,redirect,session,Response,send_file
 from keras.models import load_model
-from keras.preprocessing.image import load_img,img_to_array
+
+from tensorflow.keras.utils import load_img,img_to_array
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 app = Flask(__name__)
 import io
