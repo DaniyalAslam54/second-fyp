@@ -1,0 +1,589 @@
+{% extends 'base1.html' %}
+{% block css_links %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet" />
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.6/jspdf.plugin.autotable.min.js"></script>
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/toastet.css') }}"> -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cards-for-report.css') }}" />
+<script src="https://www.gstatic.com/firebasejs/7.15.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.15.1/firebase-storage.js"></script>
+
+
+
+<style>
+    .menu_::-webkit-scrollbar {
+        width: 7px;
+    }
+
+    /* Track */
+    .menu_::-webkit-scrollbar-track {
+        border-radius: 100vh;
+        background: #323741;
+    }
+
+    .menu_::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, rgba(255, 237, 89, 1) 20%, rgba(120, 236, 108, 1) 86%);
+        border-radius: 15px;
+        width: thin;
+    }
+
+    .grid-container {
+
+        border-radius: 15px;
+        padding-top: 25px;
+        padding-left: 30px;
+        /* padding: 20px; */
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+
+        /* border: 2px solid #000; */
+        height: 100%;
+        width: 100%;
+        /* Ensure the grid-container takes all available height */
+    }
+
+    .grid-item {
+        margin-top: -20px;
+        flex-direction: column;
+        /* box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px; */
+        /* border: 1px solid #000; */
+        padding: 10px;
+        /* Make the grid items take all the available space */
+        width: 500px !important;
+        height: 250px;
+        box-sizing: border-box;
+        /* Ensure padding is included in the width/height calculation */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .swiper {
+        box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
+        padding: 5px;
+        width: 1110px;
+        height: 700px;
+    }
+
+    .swiper-slide {
+        /* border: 2px solid black; */
+        text-align: center;
+        font-size: 18px;
+        background: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+    }
+
+    .styleh1 {
+        font-weight: 800;
+        width: 100%;
+        text-align: left;
+    }
+</style>
+
+{% endblock %}
+{% block body_block %}
+<img id="testimg" src="" alt="">
+<h1 class="title">History</h1>
+<ul class="breadcrumbs">
+    <li><a href="#">Home</a></li>
+    <li class="divider">/</li>
+    <li><a href="#" class="active">History</a></li>
+</ul>
+<h1 id="useer" style="display: none;">{{session['user']}}</h1>
+<!-- <h1 id="speice_list" style="display: none;">{{session['species_list']}}</h1> -->
+<h1 id="farms_list" style="display: none;">{{session['farm_keys']}}</h1>
+<h1 id="role" style="display: none;">{{session['role']}}</h1>
+<h1 id="my_farms" style="display: none;">{{session['farm']}}</h1>
+<div style=" display: inline-block; margin-right: 25px;  width: 100%;">
+    <span style="display: inline-block ">
+        <div class="dropdown_">
+            <div class="select_" style="width:270px;">
+                <span name="" id="title_farm" class="selected_">--Select Farm/Orchid--</span>
+                <div class="caret_"></div>
+            </div>
+            <ul id="farms_ul" class="menu_" style="left: 2%; width: 270px;height:200px;overflow-y: scroll;transform: none; scrollbar-color:  rgba(255,237,89,1)  #f1f0f6;
+        scrollbar-width: thin;  text-align: left;">
+
+            </ul>
+        </div>
+
+    </span>
+    <span style="display: inline-block ">
+        <div class="dropdown_">
+            <div class="select_" style="width:270px;">
+                <span name="" id="title_report" class="selected_">--Select Report--</span>
+                <div class="caret_"></div>
+            </div>
+            <ul id="reports_ul" class="menu_" style="left: 23%; width: 270px;height:200px;overflow-y: scroll;transform: none; scrollbar-color:  rgba(255,237,89,1)  #f1f0f6;
+        scrollbar-width: thin;  text-align: left;z-index: 111;">
+
+            </ul>
+        </div>
+    </span>
+
+    <div id="reports_drop" class="dropdown_" style="display: inline-block;visibility: hidden;width: 260px;">
+        <div class="select_" style="width: 260px;">
+            <span id="reports_name" class="selected_">--Select Report--</span>
+            <div class="caret_"></div>
+        </div>
+        <ul id="reports" class="menu_" style="left: 20%;width:260px;height:100px;overflow-y: scroll;transform: none; scrollbar-color:  rgba(255,237,89,1)  #f1f0f6;
+                scrollbar-width: thin;  text-align: left;z-index: 111;">
+
+        </ul>
+    </div>
+    <button class="btn-send" style="width: 280px;height: 55px;visibility: hidden;">Generate PDF</button>
+    <button id="pdf" class="btn-send"
+        style="width: 180px;height: 55px;visibility: hidden;margin-right: 10px;margin-top: 10px;"
+        onclick="createPDF(jQuery_3_6_1('#reports_name').text())">Generate PDF</button>
+    <button id="csv" class="btn-send" style="width: 180px;height: 55px;visibility: hidden;margin-top: 10px;"
+        onclick="htmlToCSV()">Create CSV</button>
+</div>
+<br><br>
+<!-- <div id="table-main" class="container-fluid" style="visibility: hidden;"> -->
+
+<h3 style="display: none;" id="created_name"></h3>
+
+<h3 style="display: none;" id="sp_name"></h3>
+<!-- Swiper -->
+<div id="report-card" style="visibility: hidden;" class="swiper mySwiper">
+    <div id="report-parent" class="swiper-wrapper">
+
+
+
+
+    </div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-pagination"></div>
+</div>
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+<!-- </div> -->
+</main>
+</section>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<!-- Initialize Swiper -->
+<script>
+    // jQuery_3_6_1("report-card").hide();
+
+</script>
+
+<!--   -->
+
+
+<script>
+    // Import the functions you need from the SDKs you need
+    // import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAfGNRYMBoJkc2lNpBvC2ZlZFtV6cqWTEI",
+        authDomain: "fyp-project-cs06.firebaseapp.com",
+        databaseURL: "https://fyp-project-cs06-default-rtdb.firebaseio.com",
+        projectId: "fyp-project-cs06",
+        storageBucket: "fyp-project-cs06.appspot.com",
+        messagingSenderId: "463282028020",
+        appId: "1:463282028020:web:404b702857a860e1478da1"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+</script>
+<!---->
+<script>
+    jQuery_3_6_1(document).ready(function () {
+
+
+
+        var farmsText = jQuery_3_6_1('#my_farms').text(); // Get the text of the h1 element
+        var farmsList = farmsText.split('@'); // Split the text with the @ character
+
+        // var farms_name_list = []
+        // Loop through the farms list and split each farm with the _ character
+        for (var i = 0; i < farmsList.length; i++) {
+            var farm = farmsList[i];
+            var farmParts = farm.split('_');
+            // console.log(farmParts); 
+            jQuery_3_6_1('#farms_ul').append(`<li name=${farmParts[0]}> ${farmParts[1]}</li>`);
+            // farms_name_list.push(farmParts[1])// Display the farm parts in the console
+        };
+        jQuery_3_6_1('#farms_ul li').each(function () {
+            jQuery_3_6_1(this).click(function () {
+                const myList = document.getElementById("reports_ul");
+                myList.innerHTML = "";
+                var itemText = jQuery_3_6_1(this).attr('name');
+
+                jQuery_3_6_1('#title_farm').attr('name', itemText);
+                jQuery_3_6_1('#title_farm').text(jQuery_3_6_1(this).text())
+                jQuery_3_6_1(".menu_").removeClass("menu-open");
+                jQuery_3_6_1.ajax({
+                    type: "POST",
+                    url: "/reports_get",
+                    data: {
+                        'farm_key': jQuery_3_6_1("#title_farm").attr('name')
+                    },
+                    success: function (response) {
+                        // console.log(response);
+                        var llist = []
+                        for (var i = 0; i < response.length; i++) {
+                            // console.log(response.length)
+                            var keyy = response[i][0]
+                            console.log(keyy)
+                            var name_for = keyy.split("@")
+                            namess = name_for[0] + "@" + name_for[1]
+                            document.getElementById("created_name").innerText = "Created by: " + name_for[1];
+                            document.getElementById("sp_name").innerText = "Specie: " + name_for[0];
+                            name_for[2] = name_for[2].replace(/_/g, " ");
+                            jQuery_3_6_1('#reports_ul').append(`<li value=${namess} name=${namess}> ${name_for[2]}</li>`);
+                            const cleanedResponse = response[i][1].replace(/'/g, '"');
+                            const parsedList = JSON.parse(cleanedResponse);
+                            var again_list = [keyy, parsedList]
+                            llist.push(again_list);
+                        }
+                        // console.log(parsedList)
+                        var pointer = 0;
+                        var cure = ["Prochloraz is used as a cold non- recirculating spray. Hot water dips used to control fruit flies will also control anthracnose and stem end rots. Hot benomyl dips will control anthracnose and are useful where stem end rots are a problem."
+						,"After pruning, apply copper oxychloride at a concentration of 0.3% on the wounds. Apply Bordeaux mixture twice a year to reduce the infection rate on the trees. Sprays containing the fungicide thiophanate-methyl have proven effective against it."
+						,"In the event of severe infestation of Gall midge, application of any of the plant based products like l0% Neem leaf extract, 5% NSKE, 1% Neem oil, 0.3 % Fish oil resin soap, 3 % Dasagavya and 3 % Herbal plant extraction can be sprayed to bring down the pest population. Collect and destroy infested crop debris"
+						,"Dissolve 20 grams potassium nitrate in one liter water and spray on both sides of leaves branches and trunk before the time for flowering. adding one gram urea in the nitrate. solution may produce better mango yield calcium nitrate can be sprayed instead of potassium nitrate to get good. results."
+						,"Treating the plants with foliar sprays based on sulfur, carbonic acid, neem oil, koanin and ascorbic acid can prevent severe infection. Furthermore, milk is a natural fungicide. It can be applied in the form of whey to control powdery mildew."
+						,"Pruning to remove most of the infested plant parts is helpful. If the tree is small, sooty mold can be washed off with a strong stream of water or soap and water Systemic insecticides (such as Imidacloprid) are also effective but must be properly timed so that the pollinator killing insecticide isn't inside the plant during bloom time.",
+					]
+                        jQuery_3_6_1('#reports_ul li').each(function () {
+                            jQuery_3_6_1(this).click(function () {
+                                // jQuery_3_6_1('#title_report').attr('name', itemText);
+                                jQuery_3_6_1('#title_report').text(jQuery_3_6_1(this).text())
+                                jQuery_3_6_1(".menu_").removeClass("menu-open");
+                                document.getElementById("report-card").style.visibility = "hidden";
+                                const parentDiv = document.getElementById("report-parent");
+                                parentDiv.innerHTML = "";
+                                const clickedIndex = jQuery_3_6_1(this).index();
+                                console.log(llist[clickedIndex]);
+                                for (var z = 0; z < llist[clickedIndex][1].length; z++) {
+                                    const spanElement = document.getElementById("title_farm");
+
+                                    // Use getAttribute() to get the value of the "name" attribute
+                                    const nameAttributeValue = spanElement.getAttribute("name");
+                                    var aftersplicing = llist[clickedIndex][0];
+                                    aftersplicing = aftersplicing.replace(/@/g, "!");
+                                    var ppath = `/farms/${nameAttributeValue}/` + aftersplicing + "/" + llist[clickedIndex][1][z][0];
+                                    console.log(ppath);
+                                    var newDivHTML;
+                                    var list_pred = [0, 0, 0, 0, 0, 0];
+                                    // var disease_pointer = "No";
+                                    for (let j = 0; j < llist[clickedIndex][1][z].length; j++) {
+                                        if (llist[clickedIndex][1][z][j] == "Anthracnose") {
+                                            list_pred[0] = llist[clickedIndex][1][z][j + 1];
+                                            // disease_pointer = "Yes"
+                                        }
+                                        else if (llist[clickedIndex][1][z][j] == "Die Black") {
+                                            list_pred[1] = llist[clickedIndex][1][z][j + 1];
+                                            // disease_pointer = "Yes"
+                                        }
+                                        else if (llist[clickedIndex][1][z][j] == "Gall Midge") {
+                                            list_pred[2] = llist[clickedIndex][1][z][j + 1];
+                                            // disease_pointer = "Yes"
+                                        }
+                                        else if (llist[clickedIndex][1][z][j] == "Healthy") {
+                                            list_pred[3] = llist[clickedIndex][1][z][j + 1];
+                                        }
+                                        else if (llist[clickedIndex][1][z][j] == "Powdery Mildew") {
+                                            list_pred[4] = llist[clickedIndex][1][z][j + 1];
+                                        }
+                                        else if (llist[clickedIndex][1][z][j] == "Sooty Mould") {
+                                            list_pred[5] = llist[clickedIndex][1][z][j + 1];
+                                        }
+                                    }
+                                    console.log(list_pred)
+                                    
+                                    // if (llist[clickedIndex][1][z].includes("Healthy")) {
+                                        const highestValue = Math.max(...list_pred);
+                                        const highestIndex = list_pred.indexOf(highestValue);
+                                        console.log(highestIndex)
+                                        if (highestIndex == 3) {
+                                            newDivHTML = `<div id="rep${z + 1}" class="swiper-slide"> <div class="grid-container"> <div class="grid-item"> <h3 class="styleh1"> Image: 0${z + 1} </h3> <h4 id="name1" class="styleh1"> Image: ${llist[clickedIndex][1][z][0]}</h4> <h4 id="dis1" class="styleh1"> Disease Found: No</h4> <br><br><br> </div> <div class="grid-item"> <img src="" alt="" id="img${z + 1}" width="100%" height="100%"> </div> <div class="grid-item"> <h3 id="head1" class="styleh1" style="text-align: center;"> For More Better Results </h3> <p id="cure1"> Dissolve 20 grams potassium nitrate in one liter water and spray on both sides of leaves branches and trunk before the time for flowering. adding one gram urea in the nitrate. solution may produce better mango yield calcium nitrate can be sprayed instead of potassium nitrate to get good. results. </p> </div> <div class="grid-item"> <div class="content-data"> <div class="chart"> <br><br> <p>Chart According to Diseases Predicted</p> <div id="chart${z + 1}"></div> </div> </div> </div> </div> </div>`;
+
+                                        }
+
+                                        
+                                    // }
+                                    else {
+                                        newDivHTML = `<div id="rep${z + 1}" class="swiper-slide"> <div class="grid-container"> <div class="grid-item"> <h3 class="styleh1"> Image: 0${z + 1} </h3> <h4 id="name1" class="styleh1"> Image: ${llist[clickedIndex][1][z][0]}</h4> <h4 id="dis1" class="styleh1"> Disease Found: Yes </h4> <br><br><br> </div> <div class="grid-item"> <img src="" alt="" id="img${z + 1}" width="100%" height="100%"> </div> <div class="grid-item"> <h3 id="head1" class="styleh1" style="text-align: center;"> Cure For Highest Predicted Disease </h3> <p id="cure1"> ${cure[highestIndex]} </p> </div> <div class="grid-item"> <div class="content-data"> <div class="chart"> <br><br> <p>Chart According to Diseases Predicted</p> <div id="chart${z + 1}"></div> </div> </div> </div> </div> </div>`;
+
+                                    }
+
+
+                                    // Insert the new <div> element as a child of the parent div using insertAdjacentHTML()
+                                    parentDiv.insertAdjacentHTML('beforeend', newDivHTML);
+                                    chartcreate(list_pred, z + 1);
+                                    (function (index) {
+                                        const storage = firebase.storage();
+                                        const imageRef = storage.ref().child(ppath);
+                                        var cc = `img${index + 1}`;
+                                        console.log(cc);
+                                        imageRef
+                                            .getDownloadURL()
+                                            .then((url) => {
+                                                const imageElement = document.getElementById(`${cc}`);
+                                                imageElement.src = url;
+                                            })
+                                            .catch((error) => {
+                                                console.error("Error fetching image:", error);
+                                            });
+                                    })(z);
+
+                                }
+                                var swiper = new Swiper(".mySwiper", {
+                                    pagination: {
+                                        el: ".swiper-pagination",
+                                        type: "fraction",
+                                    },
+                                    navigation: {
+                                        nextEl: ".swiper-button-next",
+                                        prevEl: ".swiper-button-prev",
+                                    },
+                                });
+
+                                // const clickedIndex = jQuery_3_6_1(this).index();
+                                // console.log(llist[clickedIndex]);
+                                // for(var z = 0; z < 10;z++){
+                                //     if(z < llist[clickedIndex].length){
+                                //         var rep = document.getElementById(`rep${z+1}`);
+                                //         rep.style.display  = "block";
+                                //     }
+                                //     else{
+                                //         var rep = document.getElementById(`rep${z+1}`);
+                                //         rep.style.display  = "None";
+                                //     }
+                                // }
+                                // for(var z = 0;z <llist[clickedIndex].length ; z++){
+                                //     jQuery_3_6_1(`#name${z+1}`).text(`Image: ${llist[clickedIndex][z][0]}`);
+                                // }
+                                setTimeout(function () {
+                                    document.getElementById("report-card").style.visibility = "visible";
+                                }, 2000);
+
+
+                            })
+                        })
+                        //         for(var j = 0; j < parsedList.length;j++){
+                        //             console.log(parsedList[j][0]);
+                        //  }
+                        // })})
+
+
+
+
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                    }
+                });
+            });
+        });
+
+
+    })
+    function chartcreate(lst, i) {
+        console.log(i)
+        var options2 = {
+
+            series: [{
+                name: 'Count',
+                data: lst
+            }],
+            chart: {
+                width: 500,
+                height: 300,
+                type: 'bar',
+                events: {
+                    click: function (chart, w, e) {
+                        // console.log(chart, w, e)
+                    }
+                }
+            },
+
+            plotOptions: {
+                bar: {
+                    columnWidth: '75%',
+                    distributed: true,
+                }
+            },
+
+            dataLabels: {
+                enabled: true
+            },
+            legend: {
+                show: false
+            },
+            xaxis: {
+                categories: [
+
+                    ['Anthracnose'],
+                    ['Die', 'Black'],
+                    ['Gall', 'Midge'],
+
+
+                    ['Healthy'],
+                    ["Powdery", "Mildew"],
+                    ["Sooty", "Mould"]
+
+
+                ],
+                labels: {
+                    style: {
+
+                        fontSize: '14px'
+                    }
+                }
+            }
+
+        };
+
+        var chart1 = new ApexCharts(document.querySelector(`#chart${i}`), options2);
+        chart1.render();
+
+
+
+
+    }
+</script>
+<script>
+    jQuery_3_6_1("#user_role").text(jQuery_3_6_1("#user_role").text() + " (" + jQuery_3_6_1('#role').text().trim() + ")");
+
+    function createPDF(name) {
+        M.Toast.dismissAll();
+        M.toast({ html: `Please Wait!!`, classes: 'green rounded' });
+        var doc = new jsPDF('p', 'pt', 'letter');
+        var htmlstring = '';
+        var tempVarToCheckPageHeight = 0;
+        var pageHeight = 0;
+        pageHeight = doc.internal.pageSize.height;
+        specialElementHandlers = {
+            // element with id of "bypass" - jQuery style selector  
+            '#bypassme': function (element, renderer) {
+                // true = "handled elsewhere, bypass text extraction"  
+                return true
+            }
+        };
+        margins = {
+            top: 150,
+            bottom: 60,
+            left: 40,
+            right: 40,
+            width: 50
+        };
+        var y = 20;
+        doc.setLineWidth(2);
+        doc.text(200, y = y + 70, "List of All Students");
+        doc.autoTable({
+            html: '#dataTable',
+            startY: 70,
+            theme: 'grid',
+            columnStyles: {
+                //0: {
+                //    cellWidth: 45,
+                //},
+                //1: {
+                //    cellWidth: 45,
+                //},
+                //2: {
+                //    cellWidth: 45,
+                //},
+                //3: {
+                //    cellWidth: 45,
+                ////}
+            },
+            styles: {
+                minCellHeight: 40
+            }
+        })
+        doc.save(name + " CSV Report");
+    }
+
+    function htmlToCSV(html, filename) {
+        M.Toast.dismissAll();
+        M.toast({ html: `Please Wait!!`, classes: 'green rounded' });
+        var data = [];
+        var get_rows = document.querySelectorAll("table tr");
+
+        for (var i = 0; i < get_rows.length; i++) {
+            var rows = [];
+            var cols = get_rows[i].querySelectorAll("td, th");
+
+            for (var j = 0; j < cols.length; j++) {
+                rows.push(cols[j].innerText);
+            }
+
+            data.push(rows.join(","));
+        }
+
+        downloadCSVFile(data.join("\n"), filename);
+    }
+    function downloadCSVFile(csv, filename) {
+        var csv_file, download_link;
+
+        csv_file = new Blob([csv], { type: "text/csv" });
+
+        download_link = document.createElement("a");
+
+        download_link.download = jQuery_3_6_1("#reports_name").text() + " CSV Report";
+
+        download_link.href = window.URL.createObjectURL(csv_file);
+
+        download_link.style.display = "none";
+
+        document.body.appendChild(download_link);
+
+        download_link.click();
+    }
+    const dropdowns_ = document.querySelectorAll(".dropdown_");
+    dropdowns_.forEach(dropdown => {
+        const selct = dropdown.querySelector(".select_");
+        const caret = dropdown.querySelector(".caret_");
+        const menu = dropdown.querySelector(".menu_");
+        const options = dropdown.querySelectorAll(".menu_ li");
+        const selected = dropdown.querySelector(".selected_")
+
+
+        selct.addEventListener("click", () => {
+            selct.classList.toggle("select-clicked");
+            caret.classList.toggle("caret_rotate");
+            menu.classList.toggle("menu-open");
+        });
+
+        options.forEach(option => {
+            option.addEventListener("click", () => {
+                selected.innerText = option.innerText;
+                selected.classList.remove("select-clicked");
+                caret.classList.remove("caret_rotate");
+                menu.classList.remove("menu-open");
+                options.forEach(option => {
+                    option.classList.remove("active_");
+
+                });
+                option.classList.add("active_")
+            })
+        })
+
+
+    })
+
+
+
+
+
+</script>
+<!-- <script src="{{ url_for('static', filename='js/dropdown_.js') }}"></script> -->
+{% endblock %}
+
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script> -->
